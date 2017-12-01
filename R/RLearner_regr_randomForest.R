@@ -57,9 +57,9 @@ makeRLearner.regr.randomForest = function() {
       makeIntegerLearnerParam(id = "ntree", default = 500L, lower = 1L),
       makeIntegerLearnerParam(id = "se.ntree", default = 100L, lower = 1L, when = "both", requires = quote(se.method == "sd")),
       makeDiscreteLearnerParam(id = "se.method", default = "sd",
-                               values = c("bootstrap", "jackknife",  "sd"),
-                               requires = quote(se.method %in% "jackknife" && keep.inbag == TRUE),
-                               when = "both"),
+        values = c("bootstrap", "jackknife",  "sd"),
+        requires = quote(se.method %in% "jackknife" && keep.inbag == TRUE),
+        when = "both"),
       makeIntegerLearnerParam(id = "se.boot", default = 50L, lower = 1L, when = "both"),
       makeIntegerLearnerParam(id = "mtry", lower = 1L),
       makeLogicalLearnerParam(id = "replace", default = TRUE),
@@ -88,7 +88,7 @@ makeRLearner.regr.randomForest = function() {
 trainLearner.regr.randomForest = function(.learner, .task, .subset, .weights = NULL, se.method = "sd", keep.inbag = NULL, se.boot = 50L, se.ntree = 100L, ...) {
   data = getTaskData(.task, .subset, target.extra = TRUE)
   m = randomForest::randomForest(x = data[["data"]], y = data[["target"]],
-                                 keep.inbag = if (is.null(keep.inbag)) TRUE else keep.inbag, ...)
+    keep.inbag = if (is.null(keep.inbag)) TRUE else keep.inbag, ...)
   if (.learner$predict.type == "se" && se.method == "sd") {
     base.lrn = setPredictType(.learner, "response")
     base.lrn = setHyperPars(base.lrn, ntree = se.ntree)
@@ -107,9 +107,9 @@ predictLearner.regr.randomForest = function(.learner, .model, .newdata, se.metho
     pred = predict(.model$learner.model, newdata = .newdata, ...)
   if (.learner$predict.type == "se") {
     se.fun = switch(se.method,
-                    bootstrap = bootstrapStandardError,
-                    jackknife = jackknifeStandardError,
-                    sd = sdStandardError
+      bootstrap = bootstrapStandardError,
+      jackknife = jackknifeStandardError,
+      sd = sdStandardError
     )
     se = se.fun(.learner, .model, .newdata, ...)
     return(cbind(pred, se))
@@ -127,7 +127,7 @@ getOOBPredsLearner.regr.randomForest = function(.learner, .model) {
 # Set ntree = se.ntree for the brute force bootstrap
 # Set se.ntree << ntree for the noisy bootstrap (mc bias corrected)
 bootstrapStandardError = function(.learner, .model, .newdata,
-                                  se.ntree = 100L, se.boot = 50L, ...) {
+  se.ntree = 100L, se.boot = 50L, ...) {
   single.model = getLearnerModel(.model)$single.model #get raw RF model
   bagged.models = getLearnerModel(getLearnerModel(.model)$bagged.models) #get list of unbagged mlr models
   pred.bagged = lapply(bagged.models, function(x) predict(getLearnerModel(x), newdata = .newdata, predict.all = TRUE))
