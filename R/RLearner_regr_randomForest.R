@@ -55,7 +55,8 @@ makeRLearner.regr.randomForest = function() {
     package = "randomForest",
     par.set = makeParamSet(
       makeIntegerLearnerParam(id = "ntree", default = 500L, lower = 1L),
-      makeIntegerLearnerParam(id = "se.ntree", default = 100L, lower = 1L, when = "both", requires = quote(se.method == "sd")),
+      makeIntegerLearnerParam(id = "se.ntree", default = 100L, lower = 1L,
+        when = "both", requires = quote(se.method == "sd")),
       makeDiscreteLearnerParam(id = "se.method", default = "sd",
         values = c("bootstrap", "jackknife",  "sd"),
         requires = quote(se.method %in% "jackknife" && keep.inbag == TRUE),
@@ -92,7 +93,8 @@ makeRLearner.regr.randomForest = function() {
 
 #' @export
 trainLearner.regr.randomForest = function(.learner, .task, .subset,
-  .weights = NULL, se.method = "sd", keep.inbag = NULL, se.boot = 50L, se.ntree = 100L, ...) {
+  .weights = NULL, se.method = "sd", keep.inbag = NULL, se.boot = 50L,
+  se.ntree = 100L, ...) {
   data = getTaskData(.task, .subset, target.extra = TRUE)
   m = randomForest::randomForest(x = data[["data"]], y = data[["target"]],
     keep.inbag = if (is.null(keep.inbag)) TRUE else keep.inbag, ...)
@@ -153,7 +155,7 @@ bootstrapStandardError = function(.learner, .model, .newdata,
   # (sum over all B:
   #   (sum over all R:
   #     (prediction for x of ensemble r in bootstrap b - average prediction for
-  x over all ensambles in bootsrap b )^2
+  # x over all ensambles in bootsrap b )^2
   #   )
   # )
   bias = rowSums(matrix(vapply(pred.boot.all, function(p) rowSums(p -
