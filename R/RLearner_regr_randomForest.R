@@ -71,7 +71,8 @@ makeRLearner.regr.randomForest = function() {
       makeLogicalLearnerParam(id = "localImp", default = FALSE),
       makeIntegerLearnerParam(id = "nPerm", default = 1L),
       makeLogicalLearnerParam(id = "proximity", default = FALSE, tunable = FALSE),
-      makeLogicalLearnerParam(id = "oob.prox", requires = quote(proximity == TRUE), tunable = FALSE),
+      makeLogicalLearnerParam(id = "oob.prox", requires = quote(proximity == TRUE),
+        tunable = FALSE),
       makeLogicalLearnerParam(id = "do.trace", default = FALSE, tunable = FALSE),
       makeLogicalLearnerParam(id = "keep.forest", default = TRUE, tunable = FALSE),
       makeLogicalLearnerParam(id = "keep.inbag", default = FALSE, tunable = FALSE)
@@ -79,13 +80,19 @@ makeRLearner.regr.randomForest = function() {
     properties = c("numerics", "factors", "ordered", "se", "oobpreds", "featimp"),
     name = "Random Forest",
     short.name = "rf",
-    note = "See `?regr.randomForest` for information about se estimation. Note that the rf can freeze the R process if trained on a task with 1 feature which is constant. This can happen in feature forward selection, also due to resampling, and you need to remove such features with removeConstantFeatures. keep.inbag is NULL by default but if predict.type = 'se' and se.method = 'jackknife' (the default) then it is automatically set to TRUE.",
+    note = "See `?regr.randomForest` for information about se estimation.
+    Note that the rf can freeze the R process if trained on a task with 1 feature
+    which is constant. This can happen in feature forward selection, also due
+    to resampling, and you need to remove such features with removeConstantFeatures.
+    keep.inbag is NULL by default but if predict.type = 'se'
+    and se.method = 'jackknife' (the default) then it is automatically set to TRUE.",
     callees = "randomForest"
   )
 }
 
 #' @export
-trainLearner.regr.randomForest = function(.learner, .task, .subset, .weights = NULL, se.method = "sd", keep.inbag = NULL, se.boot = 50L, se.ntree = 100L, ...) {
+trainLearner.regr.randomForest = function(.learner, .task, .subset,
+  .weights = NULL, se.method = "sd", keep.inbag = NULL, se.boot = 50L, se.ntree = 100L, ...) {
   data = getTaskData(.task, .subset, target.extra = TRUE)
   m = randomForest::randomForest(x = data[["data"]], y = data[["target"]],
     keep.inbag = if (is.null(keep.inbag)) TRUE else keep.inbag, ...)
@@ -100,7 +107,8 @@ trainLearner.regr.randomForest = function(.learner, .task, .subset, .weights = N
 }
 
 #' @export
-predictLearner.regr.randomForest = function(.learner, .model, .newdata, se.method = "sd", ...) {
+predictLearner.regr.randomForest = function(.learner, .model, .newdata,
+  se.method = "sd", ...) {
   if (se.method == "sd")
     pred = predict(.model$learner.model$single.model, newdata = .newdata, ...)
   else
@@ -129,11 +137,14 @@ getOOBPredsLearner.regr.randomForest = function(.learner, .model) {
 bootstrapStandardError = function(.learner, .model, .newdata,
   se.ntree = 100L, se.boot = 50L, ...) {
   single.model = getLearnerModel(.model)$single.model #get raw RF model
-  bagged.models = getLearnerModel(getLearnerModel(.model)$bagged.models) #get list of unbagged mlr models
-  pred.bagged = lapply(bagged.models, function(x) predict(getLearnerModel(x), newdata = .newdata, predict.all = TRUE))
+  bagged.models = getLearnerModel(getLearnerModel(.model)$bagged.models)
+  #get list of unbagged mlr models
+  pred.bagged = lapply(bagged.models, function(x) predict(getLearnerModel(x),
+    newdata = .newdata, predict.all = TRUE))
   pred.boot.all = extractSubList(pred.bagged, "individual", simplify = FALSE)
   ntree = single.model$ntree
-  # following the formula in 3.3 in Sexton and Laake 2009 - Standard errors for bagged and random forest estimators
+  # following the formula in 3.3 in Sexton and Laake 2009 - Standard errors for
+  bagged and random forest estimators
   # M = ntree    # number of ensembles
   # R = se.ntree # new (reduced) number of ensembles
   # B = se.boot  # number of bootstrap samples
@@ -141,13 +152,18 @@ bootstrapStandardError = function(.learner, .model, .newdata,
   # (1/R - 1/M) / (BR*(R-1)) *
   # (sum over all B:
   #   (sum over all R:
-  #     (prediction for x of ensemble r in bootstrap b - average prediction for x over all ensambles in bootsrap b )^2
+  #     (prediction for x of ensemble r in bootstrap b - average prediction for
+  x over all ensambles in bootsrap b )^2
   #   )
   # )
-  bias = rowSums(matrix(vapply(pred.boot.all, function(p) rowSums(p - rowMeans(p))^2, numeric(nrow(pred.boot.all[[1]]))), nrow = nrow(.newdata), ncol = se.boot, byrow = FALSE))
-  bist = ((1 / se.ntree) - (1 / ntree)) / (se.boot * se.ntree * (se.ntree - 1)) * bias
+  bias = rowSums(matrix(vapply(pred.boot.all, function(p) rowSums(p -
+      rowMeans(p))^2, numeric(nrow(pred.boot.all[[1]]))), nrow = nrow(.newdata),
+    ncol = se.boot, byrow = FALSE))
+  bist = ((1 / se.ntree) - (1 / ntree)) / (se.boot * se.ntree * (se.ntree - 1))
+  * bias
   pred.boot.aggregated = extractSubList(pred.bagged, "aggregate")
-  pred.boot.aggregated = matrix(pred.boot.aggregated, nrow = nrow(.newdata), ncol = se.boot, byrow = FALSE)
+  pred.boot.aggregated = matrix(pred.boot.aggregated, nrow = nrow(.newdata),
+    ncol = se.boot, byrow = FALSE)
   var.boot = apply(pred.boot.aggregated, 1, var) - bias
   var.boot = pmax(var.boot, 0)
   sqrt(var.boot)
