@@ -144,7 +144,7 @@ bootstrapStandardError = function(.learner, .model, .newdata,
   pred.boot.all = extractSubList(pred.bagged, "individual", simplify = FALSE)
   ntree = single.model$ntree
   # following the formula in 3.3 in Sexton and Laake 2009 - Standard errors for
-  bagged and random forest estimators
+  # bagged and random forest estimators
   # M = ntree    # number of ensembles
   # R = se.ntree # new (reduced) number of ensembles
   # B = se.boot  # number of bootstrap samples
